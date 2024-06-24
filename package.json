@@ -1,10 +1,18 @@
 {
   "name": "pump-backend",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon && tsx src/index.ts"
+    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "build": "rm -rf ./dist && tsc",
+    "ts-node": "ts-node",
+    "postinstall": "tsc",
+    "watch-node": "nodemon dist/index.js",
+    "watch-ts": "tsc -w",
+    "dev": "nodemon && tsx src/index.ts",
+    "start": "tsc && nodemon src/index.ts"
   },
   "keywords": [],
   "author": "",
