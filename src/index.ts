@@ -1,7 +1,7 @@
 import { createServer } from 'http'
-import app from './src/app'
-import socketio from './src/sockets/'
-import { logger } from './src/sockets/logger';
+import app from './app'
+import socketio from './sockets'
+import { logger } from './sockets/logger';
 
 // Socket communication
 const server = createServer(app);
