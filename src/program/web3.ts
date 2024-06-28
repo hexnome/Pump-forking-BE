@@ -1,5 +1,5 @@
 import { TokenStandard, createAndMint, mplTokenMetadata } from "@metaplex-foundation/mpl-token-metadata";
-import { Instruction, createSignerFromKeypair, generateSigner, percentAmount, signerIdentity } from "@metaplex-foundation/umi";
+import { createSignerFromKeypair, generateSigner, percentAmount, signerIdentity } from "@metaplex-foundation/umi";
 import { createUmi } from "@metaplex-foundation/umi-bundle-defaults";
 import { ComputeBudgetProgram, Connection, Keypair, PublicKey, SYSVAR_RENT_PUBKEY, Signer, SystemProgram, Transaction, TransactionResponse, VersionedTransaction, clusterApiUrl, sendAndConfirmTransaction } from "@solana/web3.js";
 import base58 from "bs58";
@@ -9,28 +9,25 @@ import { createLPIx, initializeIx, removeLiquidityIx } from "./web3Provider";
 import { web3 } from "@coral-xyz/anchor";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 import { PROGRAM_ID } from "./cli/programId";
-import { AccountType, TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
-import { BN } from "bn.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 import { SwapAccounts, SwapArgs, swap } from "./cli/instructions";
 import * as anchor from "@coral-xyz/anchor"
 import { ASSOCIATED_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/utils/token";
-import { LiquidityPool } from "./cli/accounts";
-import { string } from "joi";
-import { Int32 } from "mongodb";
 import { setCoinStatus } from "../routes/coinStatus";
 import CoinStatus from "../models/CoinsStatus";
 import { simulateTransaction } from "@coral-xyz/anchor/dist/cjs/utils/rpc";
 import pinataSDK from '@pinata/sdk';
+import { io } from "../sockets";
 
+require('dotenv').config();
 
 const curveSeed = "CurveConfiguration"
 const POOL_SEED_PREFIX = "liquidity_pool"
-const LP_SEED_PREFIX = "LiqudityProvider"
 const PINATA_SECRET_API_KEY = process.env.PINATA_SECRET_API_KEY
 const PINATA_GATEWAY_URL = process.env.PINATA_GATEWAY_URL;
 
 
-export const connection = new Connection(clusterApiUrl('devnet'))
+export const connection = new Connection('https://devnet.helius-rpc.com/?api-key=44b7171f-7de7-4e68-9d08-eff1ef7529bd')
 
 const privateKey = base58.decode(process.env.PRIVATE_KEY!);
 
@@ -38,7 +35,7 @@ export const adminKeypair = web3.Keypair.fromSecretKey(privateKey);
 const adminWallet = new NodeWallet(adminKeypair);
 
 // const umi = createUmi(process.env.PUBLIC_SOLANA_RPC!);
-const umi = createUmi(clusterApiUrl('devnet'));
+const umi = createUmi('https://devnet.helius-rpc.com/?api-key=44b7171f-7de7-4e68-9d08-eff1ef7529bd');
 
 const userWallet = umi.eddsa.createKeypairFromSecretKey(privateKey);
 
@@ -98,27 +95,24 @@ export const createToken = async (data: CoinInfo) => {
         tokenOwner: userWallet.publicKey,
         tokenStandard: TokenStandard.Fungible,
     })
-    const mintTx = await tx.sendAndConfirm(umi)
-    console.log(userWallet.publicKey, "Successfully minted 1 million tokens (", mint.publicKey, ")");
-    const newCoin = new Coin({
-        ...data,
-        // amount: tx.amount,
-        token: mint.publicKey
-    })
-    await sleep(5000);
+
     try {
+        const mintTx = await tx.sendAndConfirm(umi)
+        console.log(userWallet.publicKey, "Successfully minted 1 million tokens (", mint.publicKey, ")");
+        await sleep(10000);
         const lpTx = await createLPIx(new PublicKey(mint.publicKey), adminKeypair.publicKey)
         const createTx = new Transaction().add(lpTx.ix);
         createTx.feePayer = adminWallet.publicKey;
         createTx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash
+        console.log(await simulateTransaction(connection, createTx))
 
         const txId = await sendAndConfirmTransaction(connection, createTx, [adminKeypair]);
         console.log("txId:", txId)
+
         // const checkTx = await checkTransactionStatus(txId);
         const urlSeg = data.url.split('/');
         const url = `${PINATA_GATEWAY_URL}/${urlSeg[urlSeg.length - 1]}`;
         console.log(url)
-        console.log('great')
         const newCoin = new Coin({
             creator: data.creator,
             name: data.name,
@@ -143,8 +137,10 @@ export const createToken = async (data: CoinInfo) => {
         })
         await newCoinStatus.save();
         console.log("Saved Successfully...");
+        if (io != null) io.emit("TokenCreated", data.name, mint.publicKey)
         return response
     } catch (error) {
+        if (io != null) io.emit("TokenNotCreated", data.name, mint.publicKey)
         return "transaction failed"
     }
 

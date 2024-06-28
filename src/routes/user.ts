@@ -76,7 +76,7 @@ router.post('/login', async (req, res) => {
     }
 })
 
-// @route   POST api/users/:nonce
+// @route   POST api/user/:nonce
 // @desc    Confirm and Register user
 // @access  Public
 router.post('/confirm', async (req, res) => {
@@ -155,6 +155,31 @@ router.post('/confirm', async (req, res) => {
 
 });
 
+// @route   POST api/users/:nonce
+// @desc    Confirm and Register user
+// @access  Public
+router.post('/update/:id', async (req, res) => {
+    const { body } = req;
+    const userId = req.params.id;
+    // Validate form
+    const UserSchema = Joi.object().keys({
+        name: Joi.string().required(),
+        wallet: Joi.string().required(),
+        avatar: Joi.string().required(),
+    })
+    const inputValidation = UserSchema.validate(body);
+    console.log(inputValidation)
+    if (inputValidation.error) {
+        return res.status(400).json({ error: inputValidation.error.details[0].message })
+    }
+    try {
+        const updatedUser = await User.updateOne({ _id: userId }, { $set: body })
+        res.status(200).send(updatedUser);
+    } catch (err) {
+        res.status(500).send(err);
+    }
+});
+
 // GET: Fetch user
 router.get('/', async (req, res) => {
     try {
@@ -176,8 +201,6 @@ router.get('/:id', async (req, res) => {
         res.status(500).send(error);
     }
 });
-
-
 
 export default router;
 

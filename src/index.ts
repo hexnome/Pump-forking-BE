@@ -1,17 +1,49 @@
-import { createServer } from 'http'
-import app from './app'
-import socketio from './sockets'
-import { logger } from './sockets/logger';
+import express from "express";
+import cors from "cors";
+import http from "http";
+import bodyParser from "body-parser";
+import { Server } from "socket.io";
+import 'dotenv/config.js';
+import userRoutes from './routes/user'
+import coinRoutes from './routes/coin'
+import messageRoutes from './routes/feedback'
+import coinTradeRoutes from './routes/coinTradeRoutes'
+import chartRoutes from './routes/chart'
+import { init } from './db/dbConncetion';
+import { io, socketio } from "./sockets";
 
-// Socket communication
-const server = createServer(app);
+const app = express();
+const port = process.env.PORT || 5000;
+
+const whitelist = ["http://localhost:3000"];
+
+const corsOptions = {
+    origin: "*",
+    credentials: false,
+    sameSite: "none",
+};
+
+app.use(cors(corsOptions));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+init()
+
+app.get('/', async (req, res) => {
+    res.json("Success!!")
+});
+
+app.use('/user/', userRoutes);
+app.use('/coin/', coinRoutes);
+app.use('/feedback/', messageRoutes);
+app.use('/cointrade/', coinTradeRoutes)
+app.use('/chart/', chartRoutes)
+
+const server = http.createServer(app);
 socketio(server);
 
-/**
- * start Express server
- */
-server.listen(app.get('port'), () => {
-  logger.info('  App is running at http://localhost:%d in %s mode', app.get('port'), app.get('env'));
-})
+server.listen(port, async () => {
+    console.log(`server is listening on ${port}`);
 
-export default server;
+    return;
+});

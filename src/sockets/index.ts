@@ -1,32 +1,32 @@
 import { Server, Socket } from 'socket.io';
-
+import * as http from "http";
 import { logger } from './logger';
-// import { connectRedis } from './redis';
 
-const socketio = async (server: any) => {
+export let io: Server | null = null;
+export let counter = 0;
+export const socketio = async (server: http.Server) => {
   try {
     // Socket communication
-    const io = new Server(server, {
+    io = new Server(server, {
       cors: {
         origin: '*',
         methods: ['GET', 'POST'],
+        credentials: false
       },
+      pingInterval: 10000,
+      pingTimeout: 2000
     });
 
-    io.close(() => {
-      console.log('Server and all connected sockets closed');
+    io.on("connection", (socket) => {
+      console.log(" --> ADD SOCKET", counter);
+      counter++;
+      io && io.emit("connectionUpdated", counter);
+      socket.on("disconnect", () => {
+        console.log(" --> REMOVE SOCKET", counter);
+        counter--;
+        io && io.emit("connectionUpdated", counter);
+      });
     });
-
-    
-    io.on('connection', async (socket: Socket) => {
-      const id = (socket as any).user?.user?.id;
-      console.log(`socket (${socket.id}) -> ${id}`);
-      
-
-      
-    });
-
-    // await connectRedis(io);
 
     logger.info('  Socket server is running');
   } catch (err) {
@@ -34,5 +34,3 @@ const socketio = async (server: any) => {
     console.error(err);
   }
 };
-
-export default socketio;

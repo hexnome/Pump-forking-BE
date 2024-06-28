@@ -56,7 +56,7 @@ router.post('/', async (req, res) => {
         return res.status(400).json({ error: inputValidation.error.details[0].message })
     }
     // Create Token with UMI
-    const token:any = await createToken({
+    const token: any = await createToken({
         name: req.body.name,
         ticker: req.body.ticker,
         url: req.body.url,
@@ -64,14 +64,14 @@ router.post('/', async (req, res) => {
         description: req.body.description,
     });
     console.log("token====", token)
-    if(token =="transaction failed") res.status(400).json("fialed")
-        res.status(200).send(token)
+    if (token == "transaction failed") { res.status(400).json("fialed") }
+    res.status(200).send(token)
     // const name = body.name;
     // const coinName = await Coin.findOne({ name })
     // if (coinName) return res.status(400).json("Name is invalid")
     // const coinData = await Coin.findOne({ token })
     // if (coinData) return res.status(400).json("This coin is already created.")
-    
+
 })
 
 // @route   POST /coin/:coinId
