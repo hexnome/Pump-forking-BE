@@ -71,7 +71,6 @@ router.post('/', async (req, res) => {
     // if (coinName) return res.status(400).json("Name is invalid")
     // const coinData = await Coin.findOne({ token })
     // if (coinData) return res.status(400).json("This coin is already created.")
-
 })
 
 // @route   POST /coin/:coinId

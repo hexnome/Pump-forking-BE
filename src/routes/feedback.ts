@@ -11,10 +11,10 @@ const router = express.Router();
 // @access  Public
 router.get('/coin/:coinId', async (req, res) => {
     const coinId: string = req.params.coinId;
-    console.log("feedback", coinId)
+    // console.log("feedback", coinId)
     const response = await Message.find({ coinId: coinId })
         .populate('sender')
-    console.log("messages", response)
+    // console.log("messages", response)
     res.status(200).send(response)
 })
 
@@ -36,10 +36,10 @@ router.post('/', async (req, res) => {
     try {
         const newMsg = new Message(body); 
         const messages = await newMsg.save()
-        console.log(messages, "messagessssssss")
         const updatedMsg = await Message.findOne({ _id: messages._id }).populate('sender')
         if (io != null) {
-            if (io != null) io.emit("messageUpdated", body.coinId, updatedMsg)
+            console.log(updatedMsg, "messagessssssss")
+            io.emit("MessageUpdated", body.coinId, updatedMsg)
         }
         return res.status(200).send(messages)
     } catch (err) {

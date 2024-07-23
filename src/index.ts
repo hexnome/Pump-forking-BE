@@ -33,11 +33,11 @@ app.get('/', async (req, res) => {
     res.json("Success!!")
 });
 
-app.use('/user/', userRoutes);
-app.use('/coin/', coinRoutes);
-app.use('/feedback/', messageRoutes);
-app.use('/cointrade/', coinTradeRoutes)
-app.use('/chart/', chartRoutes)
+app.use('/api/user/', userRoutes);
+app.use('/api/coin/', coinRoutes);
+app.use('/api/feedback/', messageRoutes);
+app.use('/api/cointrade/', coinTradeRoutes)
+app.use('/api/chart/', chartRoutes)
 
 const server = http.createServer(app);
 socketio(server);

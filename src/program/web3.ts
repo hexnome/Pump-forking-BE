@@ -143,7 +143,6 @@ export const createToken = async (data: CoinInfo) => {
         if (io != null) io.emit("TokenNotCreated", data.name, mint.publicKey)
         return "transaction failed"
     }
-
 }
 
 // check transaction
